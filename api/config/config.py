@@ -20,7 +20,10 @@ class TestConfig(Config):
     pass
 
 class ProdConfig(Config):
-    pass
+    DEBUG = config('DEBUG', cast=bool)
+    SQLALCHEMY_ECHO=True
+    SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(BASE_DIR,'db.sqlite')
+    
 
 config_dict={
     'dev': DevConfig,
