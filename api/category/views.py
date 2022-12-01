@@ -28,11 +28,19 @@ category_resp_model = category_name_space.model(
         'data':fields.List(fields.Nested(category_model))
     }
 )
+category_creation_resp_model = category_name_space.model(
+    'respdata',{
+        'status': fields.Boolean(required=True, description= "Status"),
+        'message': fields.String(required=True, description='Response message'),
+        'data':fields.Nested(category_model)
+    }
+)
 
 
 @category_name_space.route("/")
 class CreateOrGetCategory(Resource):
     @category_name_space.expect(category_req_model)
+    @category_name_space.marshal_with(category_creation_resp_model)
     @jwt_required()
     def post(self):
         user_name = get_jwt_identity()
@@ -40,16 +48,15 @@ class CreateOrGetCategory(Resource):
         data = request.get_json()
         category_name = data.get('name')
         category_description = data.get('description')
+        print('categorytName:', category_name)
+        print('descirption:', category_description)
         if current_user is not None and category_name is not None:
             category = Category(name=category_name, description= category_description, user_id= current_user.id)
             category.save()
-            resp = {
-                'data':category.as_dict(),
-                'status':True
-            }
-            return category, HTTPStatus.CREATED
+            resp = RespData(status=True,message='Success',data=category)
+            return resp, HTTPStatus.CREATED
         resp = {
-            'message':'Category name is not fond in request',
+            'message':'Category name is not found in request',
             'status':False
         }
         return resp, HTTPStatus.BAD_REQUEST
