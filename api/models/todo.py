@@ -3,11 +3,11 @@ from datetime import datetime
 from enum import Enum
 
 class ToDoStatus(Enum):
-    CREATED="created"
-    STARTED="started"
-    COMPLETED="completed"
-    EXPIRED="expired"
-    UNKNOWN="unknown"
+    CREATED="CREATED"
+    STARTED="STARTED"
+    COMPLETED="COMPLETED"
+    EXPIRED="EXPIRED"
+    UNKNOWN="UNKNOWN"
 
 
 
