@@ -1,7 +1,7 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restx import Resource,Namespace,fields
 from ..models.users import User
-from ..models.resp_data import RespData
+from ..models.resp_data import RespSuccessData, RespErrorData
 from ..models.todo import Todo
 from flask import request
 from http import HTTPStatus
@@ -54,7 +54,7 @@ class Tdodo(Resource):
         user_name = get_jwt_identity()
         current_user = User.query.filter_by(user_name = user_name).first()
         if(current_user is not None):
-            return RespData(status=True, message="Success",data=current_user.todos), HTTPStatus.OK
+            return RespSuccessData(status=True, message="Success",data=current_user.todos), HTTPStatus.OK
         
         resp_data = {
             "status":True,
@@ -78,24 +78,73 @@ class Tdodo(Resource):
             category_id = data.get('category_id')
             todo = Todo(name=name,description=description,start_date=start_date,status=status,category_id=category_id,user_id=current_user.id)
             todo.save()
-            resp = RespData(status=True,message ="Successfully added", data=todo)
+            resp = RespSuccessData(status=True,message ="Successfully added", data=todo)
             return resp, HTTPStatus.CREATED
         else:
-            resp = RespData(status=False, message="Could not found the user")
+            resp = RespSuccessData(status=False, message="Could not found the user")
             return resp, HTTPStatus.BAD_REQUEST
 
 
 @todo_name_space.route('/<int:todo_id>')
 class GetOrUpdateTodo(Resource):
 
-    @jwt_required
+    @todo_name_space.marshal_with(todo_resp_model)
+    @jwt_required()
     def get(self, todo_id):
         user_name = get_jwt_identity()
-        pass
+        current_user = User.query.filter_by(user_name=user_name).first()
+        print("\nTdod Id:", todo_id)
+        todo = list(filter(lambda todo: todo.id == todo_id, current_user.todos))
+        print("\nTodo Data:", todo)
+        if len(todo)> 0:
+            return RespSuccessData(status=True,message="Success",data=todo[0]), HTTPStatus.OK
+        return  {
+            'status':False,
+            'message':"Todo data not found"
+        }
+    @todo_name_space.expect(todo_req_model)
+    @todo_name_space.marshal_with(todo_resp_model)
+    @jwt_required()
     def put(self, todo_id):
-        pass
+        user_name = get_jwt_identity()
+        current_user = User.query.filter_by(user_name= user_name).first()
+        todo_req = todo_name_space.payload
+        if(current_user is not None):
+            todo = Todo.query.filter_by(id = todo_id).first()
+            if(todo is not None and todo.user_id == current_user.id):
+                todo.name = todo_req['name']
+                todo.description = todo_req['description']
+                todo.status = ToDoStatus(todo_req['status'].upper())
+                todo.category_id = todo_req['category_id']
+                todo.save()
+                return RespSuccessData(status=True,message="Success",data=todo), HTTPStatus.OK
+        return RespErrorData(status=False,message="Failed"), HTTPStatus.BAD_REQUEST
+    @jwt_required()
     def delete(self, todo_id):
-        pass
+        user_name = get_jwt_identity()
+        current_user = User.query.filter_by(user_name= user_name).first()
+        todo_req = list(filter(lambda todo: todo.id == todo_id, current_user.todos))
+        if len(todo_req) > 0 :
+            todo_req[0].delete()
+            return {
+                'status':True,
+                'message':'Success'
+            }, HTTPStatus.OK
+        return {
+                'status':False,
+                'message':'Failed to delete'
+            }, HTTPStatus.BAD_REQUEST
     def patch(self, todo_id):
         pass
+
+def id_filer(todo_id, todo):
+    if todo_id == todo.id:
+        return True
+    else:
+        return False
+
+
+
+
+
 

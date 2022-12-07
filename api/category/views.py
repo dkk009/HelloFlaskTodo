@@ -3,7 +3,7 @@ from flask_restx import Resource, Namespace, fields
 from flask import request 
 from ..models.category import Category
 from ..models.users import User
-from ..models.resp_data import RespData
+from ..models.resp_data import RespSuccessData
 from http import HTTPStatus
 import json
 category_name_space = Namespace(name='category', description="Category name space")
@@ -53,7 +53,7 @@ class CreateOrGetCategory(Resource):
         if current_user is not None and category_name is not None:
             category = Category(name=category_name, description= category_description, user_id= current_user.id)
             category.save()
-            resp = RespData(status=True,message='Success',data=category)
+            resp = RespSuccessData(status=True,message='Success',data=category)
             return resp, HTTPStatus.CREATED
         resp = {
             'message':'Category name is not found in request',
@@ -68,7 +68,7 @@ class CreateOrGetCategory(Resource):
         current_user = User.query.filter_by(user_name = user_name).first()
         if current_user is not None:
             categoryList = current_user.categories
-            response = RespData(status=True,message='Success',data=categoryList)
+            response = RespSuccessData(status=True,message='Success',data=categoryList)
             return response, HTTPStatus.OK
         resp = {
             'message':'Category name is not fond in request',
