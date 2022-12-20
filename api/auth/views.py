@@ -37,6 +37,7 @@ class Authentication(Resource):
                 'message':'Authenticated successfully',
                 'access_token':access_token,
                 'refresh_token':refresh_token,
+                'data':current_user.as_dict(),
                 'status':True
             }
             return response, HTTPStatus.OK
@@ -86,3 +87,23 @@ class RefreshToken(Resource):
             'refresh_token':refresh_token
         }
         return response, HTTPStatus.OK
+@auth_name_space.route("/user_exist")
+class UserExist(Resource):
+    def post(self):
+        data = request.get_json()
+        user_name = data.get('user_name')
+        print(f"user:{user_name}")
+        user = User.query.filer_by(user_name=user_name)
+        if user is not None:
+            return {
+                'data':f'user existing with this :{user_name}',
+                'status':False
+            }
+        else:
+            return {
+                'data':f'',
+                'status':True
+            }
+        pass
+
+
